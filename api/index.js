@@ -1,16 +1,13 @@
 const express = require('express');
-const path = require('path');
 const axios = require('axios');
 require('dotenv').config();
 
 const app = express();
-const port = process.env.PORT || 3000;
 
 app.use(express.static('public'));
 
-
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.send("Welcome to Medisearch Backend!");
 });
 
 app.get('/api/suggestions', async (req, res) => {
@@ -71,6 +68,4 @@ app.get('/api/medicine-info', async (req, res) => {
     }
 });
 
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-});
+module.exports = app;
