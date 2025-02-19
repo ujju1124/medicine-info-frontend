@@ -4,7 +4,11 @@ require('dotenv').config();
 
 const app = express();
 
-app.use(express.static('public'));
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Content-Type', 'application/json');
+    next();
+  });
 
 app.get('/', (req, res) => {
     res.send("Welcome to Medisearch Backend!");
@@ -67,6 +71,11 @@ app.get('/api/medicine-info', async (req, res) => {
         res.status(500).json({ error: "Failed to fetch medicine information" });
     }
 });
+
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Server error' });
+  });
 
 // Export the app for Vercel
 module.exports = app;
