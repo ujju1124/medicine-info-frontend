@@ -2,7 +2,7 @@
   "name": "medisearch",
   "version": "1.0.0",
   "main": "api/index.js",
-  
+
   "dependencies": {
     "axios": "^0.21.1",
     "dotenv": "^10.0.0",
@@ -10,7 +10,7 @@
   },
   "scripts": {
     "start": "node api/index.js",
-    "vercel-build": "echo 'No build required'"
+    "vercel-build": "mkdir -p docs && cp -r docs/* public/ || echo 'Frontend files copied'"
   },
   "engines": {
     "node": "18.x"
