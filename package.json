@@ -8,6 +8,8 @@
     "express": "^4.17.1"
   },
   "scripts": {
-    "start": "node api/index.js"
+    "start": "node api/index.js",
+    "vercel-build": "npm install && echo 'Frontend built'"
+
   }
 }
