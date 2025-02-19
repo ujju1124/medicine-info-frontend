@@ -10,7 +10,7 @@
   },
   "scripts": {
     "start": "node api/index.js",
-    "vercel-build": "mkdir -p public && cp -r docs/* public/ || echo 'Frontend files copied'"
+    "vercel-build": "echo 'Serving existing docs directory'"
   },
   "engines": {
     "node": "18.x"
