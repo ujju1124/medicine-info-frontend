@@ -231,34 +231,35 @@ tsParticles.load("particles-container", {
   })
   
   imageUpload.addEventListener("change", async (event) => {
-    const file = event.target.files[0]
+    const file = event.target.files[0];
     if (file) {
-      showLoading()
-      try {
-        const formData = new FormData()
-        formData.append("image", file)
-  
-        const response = await fetch("/api/extract-medicine-name", {
-          method: "POST",
-          body: formData,
-        })
-  
-        const data = await response.json()
-  
-        if (data.medicineName) {
-          searchInput.value = data.medicineName
-          handleSearch(data.medicineName)
-        } else {
-          showError("Failed to extract medicine name from the image.")
+        showLoading();
+        try {
+            const formData = new FormData();
+            formData.append("image", file);
+
+            const response = await fetch("/api/extract-medicine-name", {
+                method: "POST",
+                body: formData,
+            });
+
+            const data = await response.json();
+
+            if (data.medicineName) {
+                searchInput.value = data.medicineName;
+                handleSearch(data.medicineName);
+            } else {
+                showError(data.error || "Failed to extract medicine name from the image.");
+            }
+        } catch (error) {
+            console.error("Error uploading image:", error);
+            showError("An error occurred while processing the image.");
+        } finally {
+            hideLoading();
         }
-      } catch (error) {
-        console.error("Error uploading image:", error)
-        showError("An error occurred while processing the image.")
-      } finally {
-        hideLoading()
-      }
     }
-  })
+});
+
   
   // Update displayMedicineInfo function
   function displayMedicineInfo(medicineInfo) {
