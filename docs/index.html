@@ -40,15 +40,27 @@
             <section class="search-section">
                 <div class="search-card">
                     <h2><i data-lucide="search"></i> Find Medication</h2>
-                    <div class="search-input-container">
-                        <div class="input-wrapper">
-                            <input type="text" id="searchInput" placeholder="Enter medicine name...">
-                            <div class="input-focus-effect"></div>
+                    <div class="search-methods">
+                        <div class="search-input-container">
+                            <div class="input-wrapper">
+                                <input type="text" id="searchInput" placeholder="Enter medicine name...">
+                                <div class="input-focus-effect"></div>
+                            </div>
+                            <div class="separator">
+                                <span>OR</span>
+                            </div>
+                            <div class="image-upload-container">
+                                <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+                                <button id="uploadButton" class="upload-button">
+                                    <i data-lucide="camera"></i>
+                                    <span>Upload Medicine Picture</span>
+                                </button>
+                            </div>
+                            <button id="searchButton" class="search-button">
+                                <i data-lucide="search"></i>
+                                <span>Search</span>
+                            </button>
                         </div>
-                        <button id="searchButton" class="search-button">
-                            <i data-lucide="search"></i>
-                            <span>Search</span>
-                        </button>
                     </div>
                     <div id="suggestions" class="suggestions"></div>
                     <div id="recentSearches" class="recent-searches"></div>
@@ -72,12 +84,18 @@
             <section id="medicineInfo" class="medicine-info-section" style="display: none;">
                 <!-- Medicine info will be dynamically inserted here -->
             </section>
+
+            <section id="consultDoctor" class="consult-doctor-section" style="display: none;">
+                <h2><i data-lucide="user-plus"></i> Consult a Doctor</h2>
+                <div class="doctor-list">
+                    <!-- Doctor information will be dynamically inserted here -->
+                </div>
+            </section>
         </main>
 
         <footer class="app-footer">
             <p>&copy; 2025 MediSearch Pro. All rights reserved.</p>
-            <p>&copy; 2025 Ujwal Dahal </p>
-
+            <p>&copy; 2025 Ujwal Dahal</p>
         </footer>
     </div>
     <script src="script.js"></script>
