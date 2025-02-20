@@ -1,22 +1,13 @@
 const express = require("express");
+const axios = require("axios");
 const multer = require("multer");
 const { createWorker } = require("tesseract.js");
-const axios = require("axios");
 require("dotenv").config();
 
 const app = express();
-
-// Configure multer for image upload
 const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-    fileFilter: (req, res, cb) => {
-        if (file.mimetype.startsWith('image/')) {
-            cb(null, true);
-        } else {
-            cb(new Error('Only image files are allowed'));
-        }
-    }
+    limits: { fileSize: 4 * 1024 * 1024 }, // 4MB limit
 });
 
 // CORS middleware
@@ -31,100 +22,104 @@ app.use((req, res, next) => {
     next();
 });
 
-// Improved OCR processing
+// Extracts text from image using Tesseract.js
 async function processImage(buffer) {
-    const worker = await createWorker('eng');
+    const worker = await createWorker("eng");
     try {
-        await worker.loadLanguage('eng');
-        await worker.initialize('eng');
+        await worker.loadLanguage("eng");
+        await worker.initialize("eng");
         const { data: { text } } = await worker.recognize(buffer);
+        return text;
+    } finally {
         await worker.terminate();
-        return text.trim();
-    } catch (error) {
-        console.error('OCR Error:', error);
-        throw new Error('Failed to process image');
     }
 }
 
-// Enhanced medicine name extraction
-function extractMedicineName(text) {
-    // Split text into words and clean them
+// Extracts the most likely medicine name from OCR text
+function extractMostLikelyMedicineName(text) {
     const words = text
-        .split(/[\s,.-]+/)
-        .map(word => word.trim())
-        .filter(word => word.length > 2)
-        .filter(word => /^[A-Za-z]+$/i.test(word));
+        .replace(/[^\w\s]/gi, '')
+        .split(/\s+/)
+        .filter(word => word.length > 2 && isValidWord(word));
 
-    // Find words that are likely to be medicine names
-    const potentialNames = words.filter(word => 
-        word.length >= 4 && // Most medicine names are at least 4 characters
-        /^[A-Z]/i.test(word) && // Usually starts with a capital letter
-        !/^(THE|AND|FOR|WITH|TAKE|DAILY|TWICE|ONCE)$/i.test(word) // Exclude common words
-    );
-
-    return potentialNames[0] || null;
+    return words.length > 0 ? words[0] : null;
 }
 
-// Medicine info endpoint
-app.post("/api/extract-medicine-name", upload.single('image'), async (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ error: "No image file provided" });
-    }
+function isValidWord(word) {
+    return isNaN(word) && /^[A-Za-z]+$/.test(word);
+}
 
+// Fetches medicine details from OpenFDA API
+async function fetchMedicineInfo(medicineName) {
     try {
-        // Process image with OCR
-        const text = await processImage(req.file.buffer);
-        console.log('Extracted text:', text);
+        console.log(`Searching OpenFDA for medicine: ${medicineName}`);
 
-        // Extract medicine name
-        const medicineName = extractMedicineName(text);
-        if (!medicineName) {
-            return res.status(400).json({ error: "Could not detect a medicine name in the image" });
-        }
-
-        console.log('Detected medicine name:', medicineName);
-
-        // Fetch medicine info from OpenFDA
         const apiKey = process.env.OPENFDA_API_KEY;
         if (!apiKey) {
             throw new Error("FDA API key is not configured");
         }
 
         const response = await axios.get("https://api.fda.gov/drug/label.json", {
-            params: {
-                search: `openfda.brand_name:"${medicineName}"`,
-                api_key: apiKey,
-                limit: 1
+            params: { 
+                search: `openfda.brand_name:"${medicineName}"`, 
+                api_key: apiKey, 
+                limit: 1 
             }
         });
 
         if (response.data.results && response.data.results.length > 0) {
-            res.json({ results: [response.data.results[0]] });
-        } else {
-            // Try partial match
-            const partialResponse = await axios.get("https://api.fda.gov/drug/label.json", {
-                params: {
-                    search: `openfda.brand_name:${medicineName}*`,
-                    api_key: apiKey,
-                    limit: 1
-                }
-            });
-
-            if (partialResponse.data.results && partialResponse.data.results.length > 0) {
-                res.json({ results: [partialResponse.data.results[0]] });
-            } else {
-                res.status(404).json({ error: "Medicine not found in database" });
-            }
+            return { results: [response.data.results[0]] };
         }
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ 
-            error: error.message || "Failed to process the image and find medicine information" 
+
+        // Try partial match if exact match fails
+        const partialResponse = await axios.get("https://api.fda.gov/drug/label.json", {
+            params: { 
+                search: `openfda.brand_name:${medicineName}*`, 
+                api_key: apiKey, 
+                limit: 1 
+            }
         });
+
+        if (partialResponse.data.results && partialResponse.data.results.length > 0) {
+            return { results: [partialResponse.data.results[0]] };
+        }
+
+        return { error: "Medicine not found in database" };
+    } catch (error) {
+        console.error("OpenFDA API Error:", error.response?.data || error.message);
+        throw new Error("Failed to fetch medicine information");
+    }
+}
+
+// API Endpoints
+app.post("/api/extract-medicine-name", upload.single("image"), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: "No image file provided" });
+    }
+
+    try {
+        const text = await processImage(req.file.buffer);
+        console.log("Extracted text:", text);
+
+        const medicineName = extractMostLikelyMedicineName(text);
+        if (!medicineName) {
+            return res.status(400).json({ error: "Could not detect a medicine name" });
+        }
+
+        console.log("Detected Medicine Name:", medicineName);
+
+        const medicineInfo = await fetchMedicineInfo(medicineName);
+        if (medicineInfo.error) {
+            return res.status(404).json({ error: medicineInfo.error });
+        }
+
+        res.json(medicineInfo);
+    } catch (error) {
+        console.error("Error processing image:", error);
+        res.status(500).json({ error: error.message || "Failed to process the image" });
     }
 });
 
-// API Endpoints
 app.get("/api/medicine-info", async (req, res) => {
     const { name } = req.query;
 
@@ -181,11 +176,6 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({ 
         error: err.message || "Internal server error" 
     });
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
 });
 
 module.exports = app;
