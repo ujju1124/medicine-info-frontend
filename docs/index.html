@@ -3,55 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediSearch</title>
+    <title>MediSearch Pro</title>
     <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tsparticles/2.12.0/tsparticles.bundle.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="header-content">
-                <div class="logo">
-                    <i data-lucide="stethoscope" class="icon-large"></i>
-                    <div>
-                        <h1>MediSearch</h1>
-                        <p>Your trusted source for medication information</p>
-                    </div>
+    <div id="particles-container" class="particles-container"></div>
+    <div class="app-container">
+        <div class="floating-elements">
+            <div class="float-element pill-1"><i data-lucide="pill"></i></div>
+            <div class="float-element stethoscope"><i data-lucide="stethoscope"></i></div>
+            <div class="float-element heart"><i data-lucide="heart-pulse"></i></div>
+            <div class="float-element pill-2"><i data-lucide="capsule"></i></div>
+            <div class="float-element first-aid"><i data-lucide="first-aid"></i></div>
+        </div>
+        
+        <header class="app-header">
+            <div class="logo-container">
+                <div class="logo-icon-wrapper">
+                    <i data-lucide="heart-pulse" class="logo-icon"></i>
+                    <div class="logo-pulse"></div>
                 </div>
-                <button id="themeToggle" class="theme-toggle">
-                    <i data-lucide="moon"></i>
-                </button>
+                <div class="logo-text">
+                    <h1>MediSearch Pro</h1>
+                    <p>Your Advanced Medication Information Hub</p>
+                </div>
             </div>
+            <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
+                <i data-lucide="sun"></i>
+            </button>
         </header>
 
-        <main>
-            <div class="card">
-                <div class="card-header">
-                    <h2><i data-lucide="search"></i> Search Medicine</h2>
-                    <p>Enter the name of a medicine to get detailed information</p>
-                </div>
-                <div class="card-content">
-                    <div class="search-container">
-                        <input type="text" id="searchInput"style="color: black;" placeholder="Enter medicine name...">
-                        <button id="searchButton">
-                            <i data-lucide="search" style="color: black;"></i>
-                            <span style="color: black;">Search</span>
+        <main class="app-main">
+            <section class="search-section">
+                <div class="search-card">
+                    <h2><i data-lucide="search"></i> Find Medication</h2>
+                    <div class="search-input-container">
+                        <div class="input-wrapper">
+                            <input type="text" id="searchInput" placeholder="Enter medicine name...">
+                            <div class="input-focus-effect"></div>
+                        </div>
+                        <button id="searchButton" class="search-button">
+                            <i data-lucide="search"></i>
+                            <span>Search</span>
                         </button>
                     </div>
                     <div id="suggestions" class="suggestions"></div>
                     <div id="recentSearches" class="recent-searches"></div>
                 </div>
+            </section>
+
+            <div id="errorContainer" class="error-container" style="display: none;"></div>
+
+            <div id="loadingContainer" class="loading-container" style="display: none;">
+                <div class="loader-wrapper">
+                    <div class="loader"></div>
+                    <div class="loader-pills">
+                        <i data-lucide="pill" class="pill-icon"></i>
+                        <i data-lucide="capsule" class="pill-icon"></i>
+                        <i data-lucide="pill" class="pill-icon"></i>
+                    </div>
+                </div>
+                <p>Fetching medication information...</p>
             </div>
 
-            <div id="errorContainer" class="error-container"></div>
-
-            <div id="loadingContainer" class="loading-container"></div>
-
-            <div id="medicineInfo" class="card medicine-info">
+            <section id="medicineInfo" class="medicine-info-section" style="display: none;">
                 <!-- Medicine info will be dynamically inserted here -->
-            </div>
+            </section>
         </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2025 MediSearch Pro. All rights reserved.</p>
+            <p>&copy; 2025 Ujwal Dahal </p>
+
+        </footer>
     </div>
-   <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
+
