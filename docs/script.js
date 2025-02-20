@@ -6,7 +6,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const errorContainer = document.getElementById("errorContainer")
     const loadingContainer = document.getElementById("loadingContainer")
     const medicineInfoContainer = document.getElementById("medicineInfo")
+    const consultDoctorSection = document.getElementById("consultDoctor")
     const themeToggle = document.getElementById("themeToggle")
+    const uploadButton = document.getElementById("uploadButton")
+    const imageUpload = document.getElementById("imageUpload")
   
     let recentSearches = JSON.parse(localStorage.getItem("recentSearches")) || []
   
@@ -79,12 +82,11 @@ document.addEventListener("DOMContentLoaded", () => {
         suggestionsContainer.appendChild(item)
       })
     }
-  
-    // Initialize particles
+     // Initialize particles
 tsParticles.load("particles-container", {
     particles: {
       number: {
-        value: 25,
+        value: 20,
         density: {
           enable: true,
           value_area: 800
@@ -142,7 +144,7 @@ tsParticles.load("particles-container", {
       }
     },  
     retina_detect: true
-  });    
+  });  
   
     // Add animation to search results
     function animateResults() {
@@ -223,78 +225,153 @@ tsParticles.load("particles-container", {
     }
   }
   
+  // Image upload functionality
+  uploadButton.addEventListener("click", () => {
+    imageUpload.click()
+  })
+  
+  imageUpload.addEventListener("change", async (event) => {
+    const file = event.target.files[0]
+    if (file) {
+      showLoading()
+      try {
+        const formData = new FormData()
+        formData.append("image", file)
+  
+        const response = await fetch("/api/extract-medicine-name", {
+          method: "POST",
+          body: formData,
+        })
+  
+        const data = await response.json()
+  
+        if (data.medicineName) {
+          searchInput.value = data.medicineName
+          handleSearch(data.medicineName)
+        } else {
+          showError("Failed to extract medicine name from the image.")
+        }
+      } catch (error) {
+        console.error("Error uploading image:", error)
+        showError("An error occurred while processing the image.")
+      } finally {
+        hideLoading()
+      }
+    }
+  })
+  
+  // Update displayMedicineInfo function
   function displayMedicineInfo(medicineInfo) {
     medicineInfoContainer.innerHTML = `
-              <div class="medicine-info-header">
-                  <div class="top-buttons">
-                      <button id="printButton" aria-label="Print"><i data-lucide="printer"></i></button>
-                      <button id="shareButton" aria-label="Share"><i data-lucide="share-2"></i></button>
-                      <button id="bookmarkButton" aria-label="Bookmark"><i data-lucide="bookmark-plus"></i></button>
-                  </div>
-                  <h2><i data-lucide="pill"></i> ${medicineInfo.openfda?.brand_name?.[0] || "Unknown Medicine"}</h2>
-                  <p>${medicineInfo.openfda?.generic_name?.[0] || "No generic name available"}</p>
-                  <button id="pronounceButton" class="pronounce-button">
-                      <i data-lucide="volume-2"></i> Pronounce
-                  </button>
-              </div>
-              <div class="tab-list">
-                  <button class="tab active" data-tab="overview">Overview</button>
-                  <button class="tab" data-tab="dosage">Dosage</button>
-                  <button class="tab" data-tab="warnings">Warnings</button>
-                  <button class="tab" data-tab="ingredients">Ingredients</button>
-                  <button class="tab" data-tab="interactions">Interactions</button>
-              </div>
-              <div class="tab-content" id="overviewTab">
-                  <h3><i data-lucide="activity"></i> Overview</h3>
-                  <p><strong>Manufacturer:</strong> ${medicineInfo.openfda?.manufacturer_name?.[0] || "N/A"}</p>
-                  <p><strong>Purpose:</strong> ${medicineInfo.purpose?.[0] || "N/A"}</p>
-              </div>
-              <div class="tab-content" id="dosageTab" style="display: none;">
-                  <h3><i data-lucide="syringe"></i> Dosage and Administration</h3>
-                  <div class="accordion-item">
-                      <div class="accordion-header">Dosage Information <i data-lucide="chevron-down"></i></div>
-                      <div class="accordion-content">${medicineInfo.dosage_and_administration?.[0] || "N/A"}</div>
-                  </div>
-              </div>
-              <div class="tab-content" id="warningsTab" style="display: none;">
-                  <h3><i data-lucide="alert-triangle"></i> Warnings and Precautions</h3>
-                  <div class="accordion-item">
-                      <div class="accordion-header">Warnings <i data-lucide="chevron-down"></i></div>
-                      <div class="accordion-content">${medicineInfo.warnings?.[0] || "N/A"}</div>
-                  </div>
-                  <div class="accordion-item">
-                      <div class="accordion-header">Precautions <i data-lucide="chevron-down"></i></div>
-                      <div class="accordion-content">${medicineInfo.precautions?.[0] || "N/A"}</div>
-                  </div>
-                  <div class="accordion-item">
-                      <div class="accordion-header">Side Effects <i data-lucide="chevron-down"></i></div>
-                      <div class="accordion-content">${medicineInfo.adverse_reactions?.[0] || "N/A"}</div>
-                  </div>
-              </div>
-              <div class="tab-content" id="ingredientsTab" style="display: none;">
-                  <h3><i data-lucide="flask"></i> Ingredients</h3>
-                  <p><strong>Active Ingredients:</strong></p>
-                  <div>${medicineInfo.active_ingredient?.map((ingredient) => `<span class="badge">${ingredient}</span>`).join("") || "N/A"}</div>
-                  <p><strong>Inactive Ingredients:</strong></p>
-                  <div>${medicineInfo.inactive_ingredient?.map((ingredient) => `<span class="badge">${ingredient}</span>`).join("") || "N/A"}</div>
-              </div>
-              <div class="tab-content" id="interactionsTab" style="display: none;">
-                  <h3><i data-lucide="git-merge"></i> Drug Interactions</h3>
-                  <div id="drugInteractions">
-                      <input type="text" id="drugA" placeholder="Enter first drug name">
-                      <input type="text" id="drugB" placeholder="Enter second drug name">
-                      <button id="checkInteractionButton">Check Interaction</button>
-                      <div id="interactionResult"></div>
-                  </div>
-              </div>
-          `
+        <div class="medicine-info-header">
+          <div class="top-buttons">
+            <button id="printButton" aria-label="Print"><i data-lucide="printer"></i></button>
+            <button id="shareButton" aria-label="Share"><i data-lucide="share-2"></i></button>
+            <button id="bookmarkButton" aria-label="Bookmark"><i data-lucide="bookmark-plus"></i></button>
+          </div>
+          <h2><i data-lucide="pill"></i> ${medicineInfo.openfda?.brand_name?.[0] || "Unknown Medicine"}</h2>
+          <p>${medicineInfo.openfda?.generic_name?.[0] || "No generic name available"}</p>
+          <button id="pronounceButton" class="pronounce-button">
+            <i data-lucide="volume-2"></i> Pronounce
+          </button>
+        </div>
+        <div class="tab-list">
+          <button class="tab active" data-tab="overview">Overview</button>
+          <button class="tab" data-tab="dosage">Dosage</button>
+          <button class="tab" data-tab="warnings">Warnings</button>
+          <button class="tab" data-tab="ingredients">Ingredients</button>
+        </div>
+        <div class="tab-content" id="overviewTab">
+          <h3><i data-lucide="activity"></i> Overview</h3>
+          <p><strong>Manufacturer:</strong> ${medicineInfo.openfda?.manufacturer_name?.[0] || "N/A"}</p>
+          <p><strong>Purpose:</strong> ${medicineInfo.purpose?.[0] || "N/A"}</p>
+        </div>
+        <div class="tab-content" id="dosageTab" style="display: none;">
+          <h3><i data-lucide="syringe"></i> Dosage and Administration</h3>
+          <div class="accordion-item">
+            <div class="accordion-header">Dosage Information <i data-lucide="chevron-down"></i></div>
+            <div class="accordion-content">${medicineInfo.dosage_and_administration?.[0] || "N/A"}</div>
+          </div>
+        </div>
+        <div class="tab-content" id="warningsTab" style="display: none;">
+          <h3><i data-lucide="alert-triangle"></i> Warnings and Precautions</h3>
+          <div class="accordion-item">
+            <div class="accordion-header">Warnings <i data-lucide="chevron-down"></i></div>
+            <div class="accordion-content">${medicineInfo.warnings?.[0] || "N/A"}</div>
+          </div>
+          <div class="accordion-item">
+            <div class="accordion-header">Precautions <i data-lucide="chevron-down"></i></div>
+            <div class="accordion-content">${medicineInfo.precautions?.[0] || "N/A"}</div>
+          </div>
+          <div class="accordion-item">
+            <div class="accordion-header">Side Effects <i data-lucide="chevron-down"></i></div>
+            <div class="accordion-content">${medicineInfo.adverse_reactions?.[0] || "N/A"}</div>
+          </div>
+        </div>
+        <div class="tab-content" id="ingredientsTab" style="display: none;">
+          <h3><i data-lucide="flask"></i> Ingredients</h3>
+          <p><strong>Active Ingredients:</strong></p>
+          <div>${medicineInfo.active_ingredient?.map((ingredient) => `<span class="badge">${ingredient}</span>`).join("") || "N/A"}</div>
+          <p><strong>Inactive Ingredients:</strong></p>
+          <div>${medicineInfo.inactive_ingredient?.map((ingredient) => `<span class="badge">${ingredient}</span>`).join("") || "N/A"}</div>
+        </div>
+      `
   
     medicineInfoContainer.style.display = "block"
     setupTabs()
     setupAccordion()
     setupPronunciation(medicineInfo.openfda?.brand_name?.[0] || "")
     setupPrintAndShare()
-    setupDrugInteractions()
+    displayDoctors()
+    if (typeof lucide !== "undefined") {
+      lucide.createIcons()
+    }
+  }
+  
+  // Add displayDoctors function
+  function displayDoctors() {
+    const doctors = [
+      {
+        name: "Dr. Emily Johnson",
+        specialty: "General Practitioner",
+        image: "https://randomuser.me/api/portraits/women/68.jpg",
+        phone: "+1 (555) 123-4567",
+        email: "emily.johnson@example.com",
+      },
+      {
+        name: "Dr. Michael Chen",
+        specialty: "Cardiologist",
+        image: "https://randomuser.me/api/portraits/men/42.jpg",
+        phone: "+1 (555) 987-6543",
+        email: "michael.chen@example.com",
+      },
+      {
+        name: "Dr. Sarah Patel",
+        specialty: "Pediatrician",
+        image: "https://randomuser.me/api/portraits/women/33.jpg",
+        phone: "+1 (555) 246-8135",
+        email: "sarah.patel@example.com",
+      },
+    ]
+  
+    const doctorList = document.querySelector(".doctor-list")
+    doctorList.innerHTML = doctors
+      .map(
+        (doctor) => `
+        <div class="doctor-card">
+          <img src="${doctor.image}" alt="${doctor.name}">
+          <h3>${doctor.name}</h3>
+          <p>${doctor.specialty}</p>
+          <div class="contact-info">
+            <a href="tel:${doctor.phone}"><i data-lucide="phone"></i></a>
+            <a href="mailto:${doctor.email}"><i data-lucide="mail"></i></a>
+          </div>
+        </div>
+      `,
+      )
+      .join("")
+  
+    consultDoctorSection.style.display = "block"
     if (typeof lucide !== "undefined") {
       lucide.createIcons()
     }
