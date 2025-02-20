@@ -2,17 +2,20 @@
   "name": "medisearch",
   "version": "1.0.0",
   "main": "api/index.js",
-
   "dependencies": {
-    "axios": "^0.21.1",
-    "dotenv": "^10.0.0",
-    "express": "^4.17.1"
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "openai": "^4.20.1"
   },
   "scripts": {
     "start": "node api/index.js",
+    "dev": "nodemon api/index.js",
     "vercel-build": "echo 'Serving existing docs directory'"
   },
   "engines": {
-    "node": "18.x"
+    "node": ">=18.0.0"
   }
 }
+
