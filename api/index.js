@@ -1,22 +1,23 @@
 const express = require("express")
 const axios = require("axios")
 const multer = require("multer")
-const { Configuration, OpenAIApi } = require("openai")
+const { OpenAI } = require("openai"); // Change import
 require("dotenv").config()
 
 const app = express()
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 4 * 1024 * 1024, // 4.5MB limit
   },
 })
 
 // Initialize OpenAI configuration
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-})
-const openai = new OpenAIApi(configuration)
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  })
+  
+// const openai = new OpenAIApi(configuration)
 
 // CORS middleware
 app.use((req, res, next) => {
@@ -71,6 +72,7 @@ app.get("/api/suggestions", async (req, res, next) => {
 
     res.json({ suggestions })
   } catch (error) {
+    console.error("FDA API Error:", error.response?.data || error.message);
     next(error)
   }
 })
@@ -102,6 +104,7 @@ app.get("/api/medicine-info", async (req, res, next) => {
       res.status(404).json({ error: "Medicine not found" })
     }
   } catch (error) {
+    console.error("FDA API Error:", error.response?.data || error.message);
     next(error)
   }
 })
@@ -117,7 +120,7 @@ app.post("/api/extract-medicine-name", upload.single("image"), async (req, res, 
     }
 
     const base64Image = req.file.buffer.toString("base64")
-    const response = await openai.createChatCompletion({
+    const response = await openai.chat.completions.create({
       model: "gpt-4-vision-preview",
       messages: [
         {
@@ -139,7 +142,7 @@ app.post("/api/extract-medicine-name", upload.single("image"), async (req, res, 
       max_tokens: 100,
     })
 
-    const medicineName = response.data.choices[0].message.content.trim()
+    const medicineName = response.choices[0].message.content.trim(); // Updated path
 
     if (!medicineName) {
       return res.status(400).json({ error: "Could not detect medicine name in the image" })
