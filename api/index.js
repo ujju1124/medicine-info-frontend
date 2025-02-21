@@ -47,36 +47,36 @@ function isValidWord(word) {
 }
 
 // **Fetches medicine details from OpenPDA API**
-// async function fetchMedicineInfo(medicineName) {
-//     try {
-//         console.log(`Searching OpenPDA for medicine: ${medicineName}`);
+async function fetchMedicineInfo(medicineName) {
+    try {
+        console.log(`Searching OpenPDA for medicine: ${medicineName}`);
 
-//         const apiKey = process.env.OPENFDA_API_KEY;
-//         if (!apiKey) {
-//             throw new Error("FDA API key is not configured");
-//         }
+        const apiKey = process.env.OPENFDA_API_KEY;
+        if (!apiKey) {
+            throw new Error("FDA API key is not configured");
+        }
 
-//         // Try an **exact match** first
-//         let response = await axios.get("https://api.fda.gov/drug/label.json", {
-//             params: { search: `openfda.brand_name:"${medicineName}"`, api_key: apiKey, limit: 1 }
-//         });
+        // Try an **exact match** first
+        let response = await axios.get("https://api.fda.gov/drug/label.json", {
+            params: { search: `openfda.brand_name:"${medicineName}"`, api_key: apiKey, limit: 1 }
+        });
 
-//         if (response.data.results && response.data.results.length > 0) {
-//             return response.data.results[0]; // Return first match
-//         }
+        if (response.data.results && response.data.results.length > 0) {
+            return response.data.results[0]; // Return first match
+        }
 
-//         // If **no exact match**, try a **partial match** (fuzzy search)
-//         console.log("No exact match. Trying partial search...");
-//         response = await axios.get("https://api.fda.gov/drug/label.json", {
-//             params: { search: `openfda.brand_name:${medicineName}*`, api_key: apiKey, limit: 1 }
-//         });
+        // If **no exact match**, try a **partial match** (fuzzy search)
+        console.log("No exact match. Trying partial search...");
+        response = await axios.get("https://api.fda.gov/drug/label.json", {
+            params: { search: `openfda.brand_name:${medicineName}*`, api_key: apiKey, limit: 1 }
+        });
 
-//         return response.data.results && response.data.results.length > 0 ? response.data.results[0] : null;
-//     } catch (error) {
-//         console.error("OpenPDA API Error:", error.response?.data || error.message);
-//         return null;
-//     }
-// }
+        return response.data.results && response.data.results.length > 0 ? response.data.results[0] : null;
+    } catch (error) {
+        console.error("OpenPDA API Error:", error.response?.data || error.message);
+        return null;
+    }
+}
 
 // Update the POST /api/extract-medicine-name endpoint
 app.post("/api/extract-medicine-name", upload.single("image"), async (req, res) => {
