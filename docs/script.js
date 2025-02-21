@@ -247,7 +247,7 @@ tsParticles.load("particles-container", {
 
             if (data.medicineName) {
                 searchInput.value = data.medicineName;
-                handleSearch(data.medicineName);
+                handleSearch(data.medicineName); // This will trigger the actual search
             } else {
                 showError(data.error || "Failed to extract medicine name from the image.");
             }
@@ -259,7 +259,6 @@ tsParticles.load("particles-container", {
         }
     }
 });
-
   
   // Update displayMedicineInfo function
   function displayMedicineInfo(medicineInfo) {
