@@ -210,9 +210,10 @@ tsParticles.load("particles-container", {
       const response = await fetch(`/api/medicine-info?name=${searchQuery}`)
       const data = await response.json()
   
-      if (data.error) {
-        showError(data.error)
-      } else {
+      if (data.error || !data.results || data.results.length === 0) { // <-- Add null check
+        showError(data.error || "Medicine information not found");
+        return;
+    } else {
         displayMedicineInfo(data.results[0])
         addToRecentSearches(searchQuery)
         scrollToResults()
