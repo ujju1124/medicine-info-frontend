@@ -254,7 +254,7 @@ tsParticles.load("particles-container", {
             }
         } catch (error) {
             console.error("Error uploading image:", error);
-            showError("An error occurred while processing the image.");
+            showError("Something went wrong while processing the image. Please try again, or you can provide your input as text instead.");
         } finally {
             hideLoading();
         }
