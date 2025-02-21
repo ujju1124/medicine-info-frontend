@@ -56,27 +56,32 @@ async function fetchMedicineInfo(medicineName) {
             throw new Error("FDA API key is not configured");
         }
 
-        // Try an **exact match** first
-        let response = await axios.get("https://api.fda.gov/drug/label.json", {
-            params: { search: `openfda.brand_name:"${medicineName}"`, api_key: apiKey, limit: 1 }
-        });
+        // Function to fetch data from FDA API
+        const fetchData = async (searchTerm) => {
+            const response = await axios.get("https://api.fda.gov/drug/label.json", {
+                params: { search: searchTerm, api_key: apiKey, limit: 1 }
+            });
+            return response.data.results && response.data.results.length > 0 ? response.data.results[0] : null;
+        };
 
-        if (response.data.results && response.data.results.length > 0) {
-            return response.data.results[0]; // Return first match
+        // Try an exact match first
+        let medicineInfo = await fetchData(`openfda.brand_name:"${medicineName}"`);
+        if (medicineInfo) {
+            return medicineInfo; // Return first match
         }
 
-        // If **no exact match**, try a **partial match** (fuzzy search)
+        // If no exact match, try a partial match (fuzzy search)
         console.log("No exact match. Trying partial search...");
-        response = await axios.get("https://api.fda.gov/drug/label.json", {
-            params: { search: `openfda.brand_name:${medicineName}*`, api_key: apiKey, limit: 1 }
-        });
+        medicineInfo = await fetchData(`openfda.brand_name:${medicineName}*`);
+        
+        return medicineInfo;
 
-        return response.data.results && response.data.results.length > 0 ? response.data.results[0] : null;
     } catch (error) {
-        console.error("OpenPDA API Error:", error.response?.data || error.message);
+        console.error("API Request Failed:", error.message || error.response); // Log error details
         return null;
     }
 }
+
 
 // Update the POST /api/extract-medicine-name endpoint
 app.post("/api/extract-medicine-name", upload.single("image"), async (req, res) => {
@@ -149,7 +154,8 @@ app.get("/api/medicine-info", async (req, res, next) => {
             return res.status(404).json({ error: "Medicine not found in database" });
         }
 
-        res.json({ results: medicineInfo });
+        // Wrap in array to match frontend expectations
+        res.json({ results: [medicineInfo] }); // <-- Add array wrapper
 
     } catch (error) {
         console.error("Error fetching medicine info:", error);
