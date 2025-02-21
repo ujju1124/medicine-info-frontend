@@ -32,17 +32,18 @@ async function processImage(buffer) {
         return text;
     } finally {
         await worker.terminate();
-    }
+    }   
 }
 
 // Extracts the most likely medicine name from OCR text
 function extractMostLikelyMedicineName(text) {
-    const words = text
-        .replace(/[^\w\s]/gi, '')
-        .split(/\s+/)
-        .filter(word => word.length > 2 && isValidWord(word));
+    // Look for ALL CAPS words first
+    const capsWords = text.match(/\b[A-Z]{3,}\b/g) || [];
+    if (capsWords.length > 0) return capsWords[0];
 
-    return words.length > 0 ? words[0] : null;
+    // Fallback to title case words
+    const titleCaseWords = text.match(/\b[A-Z][a-z]+\b/g) || [];
+    return titleCaseWords.length > 0 ? titleCaseWords[0] : null;
 }
 
 function isValidWord(word) {
@@ -92,6 +93,7 @@ async function fetchMedicineInfo(medicineName) {
 }
 
 // API Endpoints
+// Update the POST /api/extract-medicine-name endpoint
 app.post("/api/extract-medicine-name", upload.single("image"), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: "No image file provided" });
@@ -107,34 +109,28 @@ app.post("/api/extract-medicine-name", upload.single("image"), async (req, res) 
         }
 
         console.log("Detected Medicine Name:", medicineName);
-
-        const medicineInfo = await fetchMedicineInfo(medicineName);
-        if (medicineInfo.error) {
-            return res.status(404).json({ error: medicineInfo.error });
-        }
-
-        res.json(medicineInfo);
+        res.json({ medicineName }); // Return only the extracted name
     } catch (error) {
         console.error("Error processing image:", error);
         res.status(500).json({ error: error.message || "Failed to process the image" });
     }
 });
 
-app.get("/api/medicine-info", async (req, res) => {
-    const { name } = req.query;
+// app.get("/api/medicine-info", async (req, res) => {
+//     const { name } = req.query;
 
-    if (!name) {
-        return res.status(400).json({ error: "Medicine name is required" });
-    }
+//     if (!name) {
+//         return res.status(400).json({ error: "Medicine name is required" });
+//     }
 
-    try {
-        const medicineInfo = await fetchMedicineInfo(name);
-        res.json(medicineInfo);
-    } catch (error) {
-        console.error("Error fetching medicine info:", error);
-        res.status(500).json({ error: error.message || "Failed to fetch medicine information" });
-    }
-});
+//     try {
+//         const medicineInfo = await fetchMedicineInfo(name);
+//         res.json(medicineInfo);
+//     } catch (error) {
+//         console.error("Error fetching medicine info:", error);
+//         res.status(500).json({ error: error.message || "Failed to fetch medicine information" });
+//     }
+// });
 
 app.get("/api/suggestions", async (req, res) => {
     const { name } = req.query;
