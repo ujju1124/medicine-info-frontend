@@ -24,14 +24,20 @@ app.use((req, res, next) => {
 
 // **Extracts text from image using Tesseract.js**
 async function processImage(buffer) {
-    const worker = await createWorker("eng");
-    await worker.loadLanguage("eng");
-    await worker.initialize("eng");
-    const { data: { text } } = await worker.recognize(buffer);
-    await worker.terminate();
-    return text;
+    const worker = await createWorker({
+        corePath: '/node_modules/tesseract.js-core/tesseract-core.wasm.js',
+        logger: m => console.log(m) // Optional logging
+    });
+    
+    try {
+        await worker.loadLanguage('eng');
+        await worker.initialize('eng');
+        const { data: { text } } = await worker.recognize(buffer);
+        return text;
+    } finally {
+        await worker.terminate();
+    }
 }
-
 // **Extracts the most likely medicine name from OCR text**
 function extractMostLikelyMedicineName(text) {
     const words = text
